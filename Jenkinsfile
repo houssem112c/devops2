@@ -50,7 +50,7 @@ pipeline {
     withSonarQubeEnv() {
       sh "${mvn}/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=foyer -Dsonar.projectName='foyer'"
     }
-  }
+  
 }
     }
 }
