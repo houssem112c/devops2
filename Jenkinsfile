@@ -42,11 +42,15 @@ pipeline {
                 sh 'mvn compile' // Command to compile the project
             }
         }
-        stage('MVN SONARQUBE') {
-            steps {
-                echo 'Running SonarQube analysis...'
-                sh 'mvn sonar:sonar -Dsonar.projectKey=<your_project_key> -Dsonar.host.url=http://<sonarqube_host>:9000 -Dsonar.login=<your_sonarqube_token>' // Update with actual values
-            }
-        }
+        stage('SCM') {
+    checkout scm
+  }
+  stage('SonarQube Analysis') {
+    def mvn = tool 'Default Maven';
+    withSonarQubeEnv() {
+      sh "${mvn}/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=foyer -Dsonar.projectName='foyer'"
+    }
+  }
+}
     }
 }
