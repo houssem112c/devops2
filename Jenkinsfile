@@ -1,31 +1,33 @@
 pipeline {
     agent any
     stages {
+        stage('Check Java Version') {
+            steps {
+                echo 'Checking Java version...'
+                sh 'java -version' // Check the Java version
+            }
+        }
         stage('Build') {
             steps {
                 echo 'Building...'
-                // Compile the code
                 sh 'mvn clean package' // Example build command
             }
         }
         stage('Test') {
             steps {
                 echo 'Testing...'
-                // Run unit tests
                 sh 'mvn test' // Example test command
             }
         }
         stage('Deploy') {
             steps {
                 echo 'Deploying...'
-                // Deploy to a server
                 sh 'mvn deploy' // Example deploy command
             }
         }
         stage('GIT') {
             steps {
                 echo 'Getting project from Git'
-                // Checkout or pull the latest code
                 sh 'git checkout main' // Adjust branch name as needed
                 sh 'git pull origin main' // Pull latest changes
             }
