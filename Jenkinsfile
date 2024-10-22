@@ -4,28 +4,28 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building...'
-                // Add build steps here, e.g., compiling code
+                // Compile the code
                 sh 'mvn clean package' // Example build command
             }
         }
         stage('Test') {
             steps {
                 echo 'Testing...'
-                // Add test steps here, e.g., running unit tests
+                // Run unit tests
                 sh 'mvn test' // Example test command
             }
         }
         stage('Deploy') {
             steps {
                 echo 'Deploying...'
-                // Add deploy steps here, e.g., deploying to a server
+                // Deploy to a server
                 sh 'mvn deploy' // Example deploy command
             }
         }
         stage('GIT') {
             steps {
-                echo "Getting project from Git"
-                // Add commands to checkout or pull the latest code
+                echo 'Getting project from Git'
+                // Checkout or pull the latest code
                 sh 'git checkout main' // Adjust branch name as needed
                 sh 'git pull origin main' // Pull latest changes
             }
@@ -43,14 +43,21 @@ pipeline {
             }
         }
         stage('SCM') {
-    checkout scm
-  }
-  stage('SonarQube Analysis') {
-    def mvn = tool 'Default Maven';
-    withSonarQubeEnv() {
-      sh "${mvn}/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=foyer -Dsonar.projectName='foyer'"
-    }
-  
-}
+            steps {
+                echo 'Checking out SCM...'
+                checkout scm
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                echo 'Running SonarQube analysis...'
+                script {
+                    def mvn = tool 'Default Maven' // Ensure 'Default Maven' is configured in Jenkins
+                    withSonarQubeEnv() {
+                        sh "${mvn}/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=foyer -Dsonar.projectName='foyer'"
+                    }
+                }
+            }
+        }
     }
 }
