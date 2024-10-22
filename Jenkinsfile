@@ -19,5 +19,27 @@ pipeline {
                 // Add deploy steps here
             }
         }
+          stage('GIT') {
+            steps {
+                echo "Getting project form git"
+                .......................................
+                // Add deploy steps here
+            }
+          }
+           stage('MVN CLEAN') {
+            steps {
+                sh '...........' 
+            }
+          }
+          stage('MVN COMPILE') {
+            steps {
+                ........................
+            }
+          }
+          stage('MVN SONARQUBE') {
+            steps {
+                ........................
+            }
+          }
     }
 }
