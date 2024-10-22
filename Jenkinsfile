@@ -21,8 +21,7 @@ pipeline {
         }
           stage('GIT') {
             steps {
-                echo "Getting project form git"
-                .......................................
+                echo "Getting project form git";
                 // Add deploy steps here
             }
           }
@@ -33,12 +32,10 @@ pipeline {
           }
           stage('MVN COMPILE') {
             steps {
-                ........................
             }
           }
           stage('MVN SONARQUBE') {
             steps {
-                ........................
             }
           }
     }
