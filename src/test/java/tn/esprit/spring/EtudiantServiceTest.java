@@ -15,14 +15,15 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import tn.esprit.spring.DAO.Entities.Etudiant;
 import tn.esprit.spring.DAO.Repositories.EtudiantRepository;
 import tn.esprit.spring.Services.Etudiant.EtudiantService;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
