@@ -1,65 +1,110 @@
+pipeline docker 
 pipeline {
     agent any
+    
+    environment {
+        GIT_HTTP_BUFFER_SIZE = '524288000'
+        DOCKER_IMAGE = "houssem69/foyerapp"
+        DOCKER_TAG = "${BUILD_NUMBER}"
+        SONAR_TOKEN = credentials('sonarqubes')  // Assure que le token est stocké comme une crédential Jenkins
+
+    }
+    
     stages {
-        stage('Check Java Version') {
+        stage('Récupération du code') {
             steps {
-                echo 'Checking Java version...'
-                sh 'java -version' // Check the Java version
+                git branch: 'user', url: 'https://github.com/houssem112c/devops-.git'
             }
         }
-        stage('Build') {
+        
+        stage('MVN clean') {
             steps {
-                echo 'Building...'
-                sh 'mvn clean package' // Example build command
+                echo 'Running Maven clean...'
+                sh 'mvn clean'
             }
         }
-        stage('Test') {
+                stage('MVN package') {
             steps {
-                echo 'Testing...'
-                sh 'mvn test' // Example test command
+                echo 'Running Maven package...'
+                sh 'mvn package -DskipTests'
             }
         }
-        stage('Deploy') {
+        
+        stage('MVN build') {
             steps {
-                echo 'Deploying...'
-                sh 'mvn deploy' // Example deploy command
+                echo 'Running Maven install...'
+                sh 'mvn install -DskipTests'
             }
         }
-        stage('GIT') {
+
+        
+        stage('Construction') {
             steps {
-                echo 'Getting project from Git'
-                sh 'git checkout main' // Adjust branch name as needed
-                sh 'git pull origin main' // Pull latest changes
+                sh 'mvn package -DskipTests'
             }
         }
-        stage('MVN CLEAN') {
+        
+        stage('Construction Image Docker') {
             steps {
-                echo 'Cleaning project...'
-                sh 'mvn clean' // Command to clean the project
-            }
-        }
-        stage('MVN COMPILE') {
-            steps {
-                echo 'Compiling project...'
-                sh 'mvn compile' // Command to compile the project
-            }
-        }
-        stage('SCM') {
-            steps {
-                echo 'Checking out SCM...'
-                checkout scm
-            }
-        }
-        stage('SonarQube Analysis') {
-            steps {
-                echo 'Running SonarQube analysis...'
                 script {
-                    def mvn = tool 'Default Maven' // Ensure 'Default Maven' is configured in Jenkins
-                    withSonarQubeEnv() {
-                        sh "${mvn}/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=foyer -Dsonar.projectName='foyer'"
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                }
+            }
+        }
+        
+        stage('Push Image Docker') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockercredentials') {
+                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
+                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push("latest")
                     }
                 }
             }
+        }
+        
+        stage('Déploiement') {
+            steps {
+                echo "Déploiement de l'image ${DOCKER_IMAGE}:${DOCKER_TAG}"
+            }
+        }
+     stage('MVN SONARQUBE') {
+      environment {
+                MAVEN_OPTS = "-Dsonar.login=${SONAR_TOKEN}"  // Corrected concatenation
+            }
+            steps {
+                echo 'Exécution de l\'analyse SonarQube...'
+                withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+}
+
+        stage('Upload Artifacts to Nexus') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+    echo 'Deploying artifacts to Nexus...'
+    sh '''
+        mvn deploy \
+        -DskipTests \
+        -DaltDeploymentRepository=nexuslogin::default::http://<nexus-server>/repository/maven-releases/ \
+        -Dnexus.username="$NEXUS_USERNAME" \
+        -Dnexus.password="$NEXUS_PASSWORD"
+    '''
+}
+
+                }
+            }
+        }
+    }
+    
+    post {
+             success {
+            echo 'Pipeline terminé avec succès.'
+        }
+        failure {
+            echo 'Échec du pipeline.'
         }
     }
 }
