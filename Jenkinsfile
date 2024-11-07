@@ -7,6 +7,7 @@ pipeline {
         DOCKER_IMAGE = "houssem69/foyerapp"
         DOCKER_TAG = "${BUILD_NUMBER}"
         SONAR_TOKEN = credentials('sonarqubes')  // Assure que le token est stocké comme une crédential Jenkins
+SONARQUBE_SERVER = 'MonServeurSonarQube'  // Nom du serveur SonarQube dans Jenkins
 
     }
     
@@ -73,7 +74,7 @@ pipeline {
                 MAVEN_OPTS = "-Dsonar.login=${SONAR_TOKEN}"  // Corrected concatenation
             }
             steps {
-                echo 'Exécution de l\'analyse SonarQube...'
+                echo 'Exécution de analyse SonarQube...'
                 withSonarQubeEnv("${SONARQUBE_SERVER}") {
                     sh 'mvn sonar:sonar'
                 }
