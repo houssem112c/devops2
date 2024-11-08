@@ -1,111 +1,83 @@
-pipeline docker 
 pipeline {
     agent any
-    
-    environment {
-        GIT_HTTP_BUFFER_SIZE = '524288000'
-        DOCKER_IMAGE = "houssem69/foyerapp"
-        DOCKER_TAG = "${BUILD_NUMBER}"
-        SONAR_TOKEN = credentials('sonarqubes')  // Assure que le token est stocké comme une crédential Jenkins
-SONARQUBE_SERVER = 'MonServeurSonarQube'  // Nom du serveur SonarQube dans Jenkins
 
+    environment {
+        DOCKER_IMAGE_NAME = 'houssem69/foyerapp'
+        DOCKER_IMAGE_VERSION = 'latest'
+        DOCKER_REGISTRY = 'docker.io'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
     }
-    
+
     stages {
-        stage('Récupération du code') {
+        stage('Git') {
             steps {
+                echo 'Pulling from GitHub'
                 git branch: 'user', url: 'https://github.com/houssem112c/devops-.git'
             }
         }
-        
-        stage('MVN clean') {
+
+        stage('Build Maven') {
             steps {
-                echo 'Running Maven clean...'
-                sh 'mvn clean'
-            }
-        }
-                stage('MVN package') {
-            steps {
-                echo 'Running Maven package...'
-                sh 'mvn package -DskipTests'
-            }
-        }
-        
-        stage('MVN build') {
-            steps {
-                echo 'Running Maven install...'
-                sh 'mvn install -DskipTests'
+                sh 'mvn -Dmaven.test.failure.ignore=true clean package'
             }
         }
 
-        
-        stage('Construction') {
+        stage('Unit Test') {
             steps {
-                sh 'mvn package -DskipTests'
+                sh 'mvn -Dmaven.test.failure.ignore=true test'
             }
         }
-        
-        stage('Construction Image Docker') {
+
+        stage('Run Sonar') {
             steps {
-                script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
+                    sh 'mvn sonar:sonar -Dsonar.host.url=http://192.168.56.101:9000 -Dsonar.login=$SONAR_TOKEN'
                 }
             }
         }
-        
-        stage('Push Image Docker') {
+
+        stage('Maven Deploy') {
+            steps {
+                sh 'mvn deploy'
+            }
+        }
+
+        stage('Login to Docker Registry') {
+            steps {
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+            }
+        }
+
+        stage('Build & Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockercredentials') {
-                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
-                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push("latest")
+                    dir("${WORKSPACE}") {
+                        sh "docker build -t houssem69/foyerapp:latest -f Dockerfile ."
+                        sh "docker push houssem69/foyerapp:latest"
                     }
                 }
             }
         }
-        
-        stage('Déploiement') {
-            steps {
-                echo "Déploiement de l'image ${DOCKER_IMAGE}:${DOCKER_TAG}"
-            }
-        }
-     stage('MVN SONARQUBE') {
-      environment {
-                MAVEN_OPTS = "-Dsonar.login=${SONAR_TOKEN}"  // Corrected concatenation
-            }
-            steps {
-                echo 'Exécution de analyse SonarQube...'
-                withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    sh 'mvn sonar:sonar'
-                }
-            }
-}
 
-        stage('Upload Artifacts to Nexus') {
+        stage('JUNIT TEST with JaCoCo') {
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-    echo 'Deploying artifacts to Nexus...'
-    sh '''
-        mvn deploy \
-        -DskipTests \
-        -DaltDeploymentRepository=nexuslogin::default::http://<nexus-server>/repository/maven-releases/ \
-        -Dnexus.username="$NEXUS_USERNAME" \
-        -Dnexus.password="$NEXUS_PASSWORD"
-    '''
-}
-
-                }
+                sh 'mvn test jacoco:report'
+                echo 'Test stage done'
             }
         }
-    }
-    
-    post {
-             success {
-            echo 'Pipeline terminé avec succès.'
+
+        stage('Collect JaCoCo Coverage') {
+            steps {
+                jacoco(execPattern: '**/target/jacoco.exec')
+            }
         }
-        failure {
-            echo 'Échec du pipeline.'
+
+        stage('Docker compose') {
+            steps {
+                sh "docker-compose up -d"
+                sh 'sleep 60' // Adjust the sleep time based on your application's startup time
+            }
         }
+
     }
 }
