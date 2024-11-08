@@ -28,13 +28,14 @@ pipeline {
             }
         }
 
-        stage('Run Sonar') {
-            steps {
-                withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
-                    sh 'mvn sonar:sonar -Dsonar.host.url=http://192.168.56.101:9000 -Dsonar.login=$SONAR_TOKEN'
-                }
-            }
+      stage('Run Sonar') {
+    steps {
+        withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
+            sh 'mvn sonar:sonar -Dsonar.host.url=http://192.168.56.101:9000 -Dsonar.login=$SONAR_TOKEN'
         }
+    }
+}
+
 
         stage('Maven Deploy') {
             steps {
