@@ -1,48 +1,36 @@
 package tn.esprit.spring;
 
-
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 import tn.esprit.spring.DAO.Entities.Etudiant;
 import tn.esprit.spring.DAO.Repositories.EtudiantRepository;
 import tn.esprit.spring.Services.Etudiant.EtudiantService;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(SpringExtension.class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@SpringBootTest
-@ActiveProfiles("test")
-
+@ExtendWith(MockitoExtension.class) // Use MockitoExtension to initialize mocks
 public class EtudiantServiceTest {
 
     @Mock
-    private EtudiantRepository etudiantRepository;
+    private EtudiantRepository etudiantRepository;  // Mock the repository
 
     @InjectMocks
-    private EtudiantService etudiantService;
+    private EtudiantService etudiantService;  // Inject mocks into the service
 
     private Etudiant etudiant;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         etudiant = Etudiant.builder()
                 .idEtudiant(1L)
                 .nomEt("Doe")
