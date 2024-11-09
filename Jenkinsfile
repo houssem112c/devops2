@@ -53,8 +53,8 @@ pipeline {
             steps {
                 script {
                     dir("${WORKSPACE}") {
-                        sh "docker build -t houssem69/foyerapp:latest -f Dockerfile ."
-                        sh "docker push houssem69/foyerapp:latest"
+                        sh "docker build -t houssem69/foyerapp:latest ."
+                    sh "docker push houssem69/foyerapp:latest"
                     }
                 }
             }
