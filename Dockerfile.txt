@@ -1,14 +1,14 @@
-# Utiliser une image de base Java (OpenJDK 17)
+# Use OpenJDK 17 as the base image
 FROM openjdk:17-jdk-alpine
 
-# Définir le répertoire de travail dans le conteneur
+# Set the working directory in the container
 WORKDIR /app
 
-# Copier le fichier JAR généré dans le conteneur
+# Copy the JAR file from the target directory
 COPY target/Foyer-0.0.1-SNAPSHOT.jar app.jar
 
-# Exposer le port 8080 (ou le port utilisé par votre application)
+# Expose port 8080 (or the port your Spring Boot application uses)
 EXPOSE 8080
 
-# Démarrer l'application Spring Boot
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Start the Spring Boot application
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
