@@ -9,9 +9,9 @@ services:
     restart: always
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-      - MYSQL_DATABASE=eventsproject
+      - MYSQL_DATABASE=foyer
     volumes:
-      - ./data.sql:/docker-entrypoint-initdb.d/data.sql
+      - db_data:/var/lib/mysql
     networks:
       - mynetwork
 
