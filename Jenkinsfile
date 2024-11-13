@@ -12,7 +12,7 @@ pipeline {
         stage('Git') {
             steps {
                 echo 'Pulling from GitHub'
-                git branch: 'user', url: 'https://github.com/houssem112c/devops-.git'
+                git branch: 'benmabroukhoussem_5sim2_g5', url: 'https://github.com/houssem112c/devops-.git'
             }
         }
 
