@@ -87,7 +87,7 @@ pipeline {
                 sh 'sleep 60' // Adjust the sleep time based on your application's startup time
             }
         }
-        
+}  
     post {
         failure {
             echo 'Pipeline encountered an error.'
