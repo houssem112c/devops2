@@ -2,44 +2,76 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE_NAME = 'houssem69/foyerapp'
-        DOCKER_IMAGE_VERSION = 'latest'
+        DOCKER_IMAGE = 'houssem69/foyerapp:latest'
         DOCKER_REGISTRY = 'docker.io'
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
     }
 
     stages {
-        stage('Git') {
+        stage('Setup Git Config') {
+            steps {
+                sh 'git config --global http.postBuffer 524288000'
+            }
+        }
+
+        stage('Checkout GIT') {
             steps {
                 echo 'Pulling from GitHub'
                 git branch: 'benmabroukhoussem_5sim2_g5', url: 'https://github.com/houssem112c/devops-.git'
             }
         }
 
-        stage('Build Maven') {
+        stage('Check Project Files After Checkout') {
             steps {
-                sh 'mvn -Dmaven.test.failure.ignore=true clean package'
+                echo 'Listing project files after Git checkout...'
+                sh 'pwd'
+                sh 'ls -l'
             }
         }
 
-        stage('Unit Test') {
+        stage('Build without Tests') {
             steps {
-                sh 'mvn -Dmaven.test.failure.ignore=true test'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
-      stage('Run Sonar') {
-    steps {
-        withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
-            sh 'mvn sonar:sonar -Dsonar.host.url=http://192.168.50.10:9000 -Dsonar.login=$SONAR_TOKEN'
-        }
-    }
-}
-
-
-        stage('Maven Deploy') {
+        stage('Check JAR File') {
             steps {
-                sh 'mvn deploy'
+                sh 'ls -l target/'
+            }
+        }
+
+        stage('Test with JaCoCo') {
+            steps {
+                script {
+                    def result = sh(script: 'mvn test jacoco:report', returnStatus: true)
+                    if (result != 0) {
+                        error "Tests failed, JaCoCo report not generated."
+                    } else {
+                        echo 'Tests passed successfully. JaCoCo report generated.'
+                    }
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
+                    sh 'mvn sonar:sonar -Dsonar.host.url=http://192.168.50.10:9000 -Dsonar.login=$SONAR_TOKEN'
+                }
+            }
+        }
+
+        stage('Deploy to Nexus') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                    sh '''
+                    mvn deploy -DskipTests \
+                    -DaltDeploymentRepository=projetdevops::default::http://192.168.50.10:8081/repository/projetdevops/ \
+                    -Dmaven.deploy.username=$NEXUS_USERNAME \
+                    -Dmaven.deploy.password=$NEXUS_PASSWORD
+                    '''
+                }
             }
         }
 
@@ -49,44 +81,34 @@ pipeline {
             }
         }
 
-        stage('Build & Push Docker Image') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    dir("${WORKSPACE}") {
-                        sh "docker build -t houssem69/foyerapp:latest ."
-                    sh "docker push houssem69/foyerapp:latest"
+                    dockerImage = docker.build("${DOCKER_IMAGE}")
+                }
+            }
+        }
+
+        stage('Push Docker Image to DockerHub') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub_credentials') {
+                        dockerImage.push()
                     }
                 }
             }
         }
 
-        stage('JUNIT TEST with JaCoCo') {
+        stage('Docker Compose') {
             steps {
-                sh 'mvn test jacoco:report'
-                echo 'Test stage done'
+                sh 'docker-compose up -d'
             }
         }
+    }
 
-      stage('Check JaCoCo Report') {
-            steps {
-                sh 'ls -alh target/site/jacoco/'  // Check if the JaCoCo report is generated
-                echo 'Checked JaCoCo report generation'
-            }
+    post {
+        failure {
+            echo 'Pipeline encountered an error.'
         }
-
-        stage('Collect JaCoCo Coverage') {
-            steps {
-                jacoco(execPattern: 'target/jacoco.exec')  // Collect the JaCoCo coverage
-                echo 'JaCoCo Coverage collected successfully'
-            }
-        }
-
-        stage('Docker compose') {
-            steps {
-                sh "docker-compose up -d"
-                sh 'sleep 60' // Adjust the sleep time based on your application's startup time
-            }
-        }
-
     }
 }
