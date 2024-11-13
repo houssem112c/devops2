@@ -62,7 +62,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to Nexus') {
+      /*  stage('Deploy to Nexus') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
                     sh '''
@@ -74,7 +74,7 @@ pipeline {
                 }
             }
         }
-
+*/
         stage('Login to Docker Registry') {
             steps {
                 sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
