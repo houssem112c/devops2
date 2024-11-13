@@ -1,65 +1,92 @@
 pipeline {
     agent any
+
+    environment {
+        DOCKER_IMAGE_NAME = 'atefbh/foyerapp'
+        DOCKER_IMAGE_VERSION = 'latest'
+        DOCKER_REGISTRY = 'docker.io'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+    }
+
     stages {
-        stage('Check Java Version') {
+        stage('Git') {
             steps {
-                echo 'Checking Java version...'
-                sh 'java -version' // Check the Java version
+                echo 'Pulling from GitHub'
+                git branch: 'moduleBloc-atefbenharb', url: 'https://github.com/houssem112c/devops-.git'
             }
         }
-        stage('Build') {
+
+        stage('Build Maven') {
             steps {
-                echo 'Building...'
-                sh 'mvn clean package' // Example build command
+                sh 'mvn -Dmaven.test.failure.ignore=true clean package'
             }
         }
-        stage('Test') {
+
+        stage('Unit Test') {
             steps {
-                echo 'Testing...'
-                sh 'mvn test' // Example test command
+                sh 'mvn -Dmaven.test.failure.ignore=true test'
             }
         }
-        stage('Deploy') {
+
+      stage('Run Sonar') {
+    steps {
+        withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
+            sh 'mvn sonar:sonar -Dsonar.host.url=http://192.168.50.10:9000 -Dsonar.login=$SONAR_TOKEN'
+        }
+    }
+}
+
+
+        stage('Maven Deploy') {
             steps {
-                echo 'Deploying...'
-                sh 'mvn deploy' // Example deploy command
+                sh 'mvn deploy'
             }
         }
-        stage('GIT') {
+
+        stage('Login to Docker Registry') {
             steps {
-                echo 'Getting project from Git'
-                sh 'git checkout main' // Adjust branch name as needed
-                sh 'git pull origin main' // Pull latest changes
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
             }
         }
-        stage('MVN CLEAN') {
+
+        stage('Build & Push Docker Image') {
             steps {
-                echo 'Cleaning project...'
-                sh 'mvn clean' // Command to clean the project
-            }
-        }
-        stage('MVN COMPILE') {
-            steps {
-                echo 'Compiling project...'
-                sh 'mvn compile' // Command to compile the project
-            }
-        }
-        stage('SCM') {
-            steps {
-                echo 'Checking out SCM...'
-                checkout scm
-            }
-        }
-        stage('SonarQube Analysis') {
-            steps {
-                echo 'Running SonarQube analysis...'
                 script {
-                    def mvn = tool 'Default Maven' // Ensure 'Default Maven' is configured in Jenkins
-                    withSonarQubeEnv() {
-                        sh "${mvn}/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=foyer -Dsonar.projectName='foyer'"
+                    dir("${WORKSPACE}") {
+                        sh "docker build -t atefbh/foyerapp:latest ."
+                    sh "docker push atefbh/foyerapp:latest"
                     }
                 }
             }
         }
+
+        stage('JUNIT TEST with JaCoCo') {
+            steps {
+                sh 'mvn test jacoco:report'
+                echo 'Test stage done'
+            }
+        }
+
+      stage('Check JaCoCo Report') {
+            steps {
+                sh 'ls -alh target/site/jacoco/'  // Check if the JaCoCo report is generated
+                echo 'Checked JaCoCo report generation'
+            }
+        }
+
+        stage('Collect JaCoCo Coverage') {
+            steps {
+                jacoco(execPattern: 'target/jacoco.exec')  // Collect the JaCoCo coverage
+                echo 'JaCoCo Coverage collected successfully'
+            }
+        }
+
+        stage('Docker compose') {
+            steps {
+                sh "docker-compose up -d"
+                sh 'sleep 60' // Adjust the sleep time based on your application's startup time
+            }
+        }
+
     }
 }
