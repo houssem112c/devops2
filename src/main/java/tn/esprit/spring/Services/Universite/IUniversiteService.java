@@ -10,6 +10,7 @@ public interface IUniversiteService {
     Universite findById(long id);
     void deleteById(long id);
     void delete(Universite u);
+<<<<<<< HEAD
 
     // New functionality 1: Find universities by foyer ID and student enrollment status
     List<Universite> findUniversitesByFoyerAndStudentStatus(long foyerId, String status);
@@ -17,3 +18,6 @@ public interface IUniversiteService {
     // New functionality 2: Count universities by address
     long countUniversitiesByAddress(String adresse);
 }
+=======
+}
+>>>>>>> 94e3795eee2e156635c933ee79ce07c3edc3e0cf
