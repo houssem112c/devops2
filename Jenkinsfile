@@ -67,7 +67,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
                     sh '''
                     mvn deploy -DskipTests \
-                    -DaltDeploymentRepository=projetdevops::default::http://192.168.50.10:8081/repository/projetdevops/ \
+                    -DaltDeploymentRepository=projetdevops::default::http://192.168.50.10:8081/repository/maven-snapshots/ \
                     -Dmaven.deploy.username=$NEXUS_USERNAME \
                     -Dmaven.deploy.password=$NEXUS_PASSWORD
                     '''
