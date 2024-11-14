@@ -2,13 +2,7 @@ package tn.esprit.spring.RestControllers;
 
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-<<<<<<< HEAD
 import tn.esprit.spring.DAO.Entities.Universite;
-=======
-import tn.esprit.spring.DAO.Entities.Foyer;
-import tn.esprit.spring.DAO.Entities.Universite;
-import tn.esprit.spring.Services.Foyer.IFoyerService;
->>>>>>> 94e3795eee2e156635c933ee79ce07c3edc3e0cf
 import tn.esprit.spring.Services.Universite.IUniversiteService;
 
 import java.util.List;
@@ -17,50 +11,30 @@ import java.util.List;
 @RequestMapping("universite")
 @AllArgsConstructor
 public class UniversiteRestController {
-<<<<<<< HEAD
 
     IUniversiteService service;
 
     @PostMapping("addOrUpdate")
     public Universite addOrUpdate(@RequestBody Universite u) {
-=======
-    IUniversiteService service;
-
-    @PostMapping("addOrUpdate")
-    Universite addOrUpdate(@RequestBody Universite u) {
->>>>>>> 94e3795eee2e156635c933ee79ce07c3edc3e0cf
         return service.addOrUpdate(u);
     }
 
     @GetMapping("findAll")
-<<<<<<< HEAD
     public List<Universite> findAll() {
-=======
-    List<Universite> findAll() {
->>>>>>> 94e3795eee2e156635c933ee79ce07c3edc3e0cf
         return service.findAll();
     }
 
     @GetMapping("findById")
-<<<<<<< HEAD
     public Universite findById(@RequestParam long id) {
-=======
-    Universite findById(@RequestParam long id) {
->>>>>>> 94e3795eee2e156635c933ee79ce07c3edc3e0cf
         return service.findById(id);
     }
 
     @DeleteMapping("delete")
-<<<<<<< HEAD
     public void delete(@RequestBody Universite u) {
-=======
-    void delete(@RequestBody Universite u) {
->>>>>>> 94e3795eee2e156635c933ee79ce07c3edc3e0cf
         service.delete(u);
     }
 
     @DeleteMapping("deleteById")
-<<<<<<< HEAD
     public void deleteById(@RequestParam long id) {
         service.deleteById(id);
     }
@@ -77,11 +51,3 @@ public class UniversiteRestController {
         return service.countUniversitiesByAddress(adresse);
     }
 }
-=======
-    void deleteById(@RequestParam long id) {
-        service.deleteById(id);
-    }
-
-
-}
->>>>>>> 94e3795eee2e156635c933ee79ce07c3edc3e0cf
