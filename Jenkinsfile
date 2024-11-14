@@ -12,7 +12,7 @@ pipeline {
         stage('Git') {
             steps {
                 echo 'Pulling from GitHub'
-                git branch: 'benmabroukhoussem_5sim2_g5', url: 'https://github.com/houssem112c/devops-.git'
+                git branch: 'benmabroukhoussem_5sim2_g5', url: 'git@github.com:houssem112c/devops-.git'
             }
         }
 
@@ -28,14 +28,13 @@ pipeline {
             }
         }
 
-      stage('Run Sonar') {
-    steps {
-        withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
-            sh 'mvn sonar:sonar -Dsonar.host.url=http://192.168.50.10:9000 -Dsonar.login=$SONAR_TOKEN'
+        stage('Run Sonar') {
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
+                    sh 'mvn sonar:sonar -Dsonar.host.url=http://192.168.50.10:9000 -Dsonar.login=$SONAR_TOKEN'
+                }
+            }
         }
-    }
-}
-
 
         stage('Maven Deploy') {
             steps {
@@ -45,7 +44,11 @@ pipeline {
 
         stage('Login to Docker Registry') {
             steps {
-                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKERHUB_CREDENTIALS_USR', passwordVariable: 'DOCKERHUB_CREDENTIALS_PSW')]) {
+                        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                    }
+                }
             }
         }
 
@@ -53,8 +56,8 @@ pipeline {
             steps {
                 script {
                     dir("${WORKSPACE}") {
-                        sh "docker build -t houssem69/foyerapp:latest ."
-                    sh "docker push houssem69/foyerapp:latest"
+                        sh "docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION} ."
+                        sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}"
                     }
                 }
             }
@@ -67,7 +70,7 @@ pipeline {
             }
         }
 
-      stage('Check JaCoCo Report') {
+        stage('Check JaCoCo Report') {
             steps {
                 sh 'ls -alh target/site/jacoco/'  // Check if the JaCoCo report is generated
                 echo 'Checked JaCoCo report generation'
@@ -81,13 +84,14 @@ pipeline {
             }
         }
 
-        stage('Docker compose') {
+        stage('Docker Compose') {
             steps {
                 sh "docker-compose up -d"
                 sh 'sleep 60' // Adjust the sleep time based on your application's startup time
             }
         }
-}  
+    }
+
     post {
         failure {
             echo 'Pipeline encountered an error.'
